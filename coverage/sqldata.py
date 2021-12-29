@@ -75,6 +75,31 @@ CREATE TABLE context (
     unique (context)
 );
 
+CREATE TABLE log_context (
+    -- A row per log context measured.
+    id integer primary key,
+    context text,
+    unique (context)
+);
+
+create TABLE current_context (
+    -- one row to keep track of current log context and (coverage) context
+    context_id integer,
+    log_context_id integer,
+    foreign key (context_id) references context(id),
+    foreign key (log_context_id) references log_context(id)
+);
+
+CREATE TABLE log_line (
+   -- A line per line of code executed
+   id integer primary key,
+   file_id integer,
+   log_context_id integer,
+   line_number integer,
+   foreign key (file_id) references file(id),
+   foreign key (log_context_id) references log_context(id)
+);
+
 CREATE TABLE line_bits (
     -- If recording lines, a row per context per file executed.
     -- All of the line numbers for that file/context are in one numbits.
