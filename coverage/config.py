@@ -192,7 +192,7 @@ class CoverageConfig:
         self.run_omit = None
         self.source = None
         self.source_pkgs = []
-        self.timid = False
+        self.timid = True
         self._crash = None
 
         # Defaults for [report]
