@@ -5,17 +5,17 @@
 # This file is exec'ed in setup.py, don't import anything!
 
 # Same semantics as sys.version_info.
-version_info = (6, 2, 0, "final", 0)
+version_info = (6, 2, 0, "testar", 0)
 
 
 def _make_version(major, minor, micro, releaselevel, serial):
     """Create a readable version string from version_info tuple components."""
-    assert releaselevel in ['alpha', 'beta', 'candidate', 'final']
+    assert releaselevel in ['alpha', 'beta', 'candidate', 'final', "testar"]
     version = "%d.%d" % (major, minor)
     if micro:
         version += ".%d" % (micro,)
     if releaselevel != 'final':
-        short = {'alpha': 'a', 'beta': 'b', 'candidate': 'rc'}[releaselevel]
+        short = {'alpha': 'a', 'beta': 'b', 'candidate': 'rc', "testar": "testar" }[releaselevel]
         version += f"{short}{serial}"
     return version
 

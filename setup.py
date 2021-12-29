@@ -74,6 +74,8 @@ if version_info[3] == 'alpha':
     devstat = "3 - Alpha"
 elif version_info[3] in ['beta', 'candidate']:
     devstat = "4 - Beta"
+elif version_info[3] == 'testar':
+    devstat = "Local version for TESTAR"
 else:
     assert version_info[3] == 'final'
     devstat = "5 - Production/Stable"
