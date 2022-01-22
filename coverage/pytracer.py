@@ -173,6 +173,7 @@ class PyTracer:
                     self.cur_file_data.add((self.last_line, lineno))
                 else:
                     self.cur_file_data.add(lineno)
+                    self.log_data.append((frame.f_code.co_filename, lineno))
                 self.last_line = lineno
         elif event == 'return':
             if self.trace_arcs and self.cur_file_data:

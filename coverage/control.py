@@ -105,7 +105,7 @@ class Coverage:
         auto_data=False, timid=None, branch=None, config_file=True,
         source=None, source_pkgs=None, omit=None, include=None, debug=None,
         concurrency=None, check_preimported=False, context=None,
-        messages=False,
+        log_context="default", messages=False
     ):  # pylint: disable=too-many-arguments
         """
         Many of these arguments duplicate and override values that can be
@@ -174,7 +174,9 @@ class Coverage:
         started can mean that code is missed.
 
         `context` is a string to use as the :ref:`static context
-        <static_contexts>` label for collected data.
+        <static_contexts>` label for collected coverage data.
+
+        log_context is a string to use as a label for collected log data.
 
         If `messages` is true, some messages will be printed to stdout
         indicating what is happening.
@@ -244,7 +246,7 @@ class Coverage:
             branch=branch, parallel=bool_or_none(data_suffix),
             source=source, source_pkgs=source_pkgs, run_omit=omit, run_include=include, debug=debug,
             report_omit=omit, report_include=include,
-            concurrency=concurrency, context=context,
+            concurrency=concurrency, context=context, log_context=log_context
             )
 
         # If we have sub-process measurement happening automatically, then we
@@ -496,7 +498,7 @@ class Coverage:
 
         self._init_data(suffix)
 
-        self._collector.use_data(self._data, self.config.context)
+        self._collector.use_data(self._data, self.config.context, self.config.log_context)
 
         # Early warning if we aren't going to be able to support plugins.
         if self._plugins.file_tracers and not self._collector.supports_plugins:
@@ -627,6 +629,17 @@ class Coverage:
             self._warn("Conflicting dynamic contexts", slug="dynamic-conflict", once=True)
 
         self._collector.switch_context(new_context)
+
+    def switch_log_context(self, new_context):
+        """Switch to a new dynamic context.
+
+        `new_context` is a string to use as the log context.
+
+        """
+        if not self._started:                           # pragma: part started
+            raise CoverageException("Cannot switch context, coverage is not started")
+
+        self._collector.switch_log_context(new_context)
 
     def clear_exclude(self, which='exclude'):
         """Clear the exclude list."""

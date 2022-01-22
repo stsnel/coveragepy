@@ -179,6 +179,7 @@ class CoverageConfig:
         self.command_line = None
         self.concurrency = None
         self.context = None
+        self.log_context = "default"
         self.cover_pylib = False
         self.data_file = ".coverage"
         self.debug = []

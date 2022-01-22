@@ -184,11 +184,12 @@ class Collector:
     def __repr__(self):
         return f"<Collector at 0x{id(self):x}: {self.tracer_name()}>"
 
-    def use_data(self, covdata, context):
+    def use_data(self, covdata, context, log_context):
         """Use `covdata` for recording data."""
         self.covdata = covdata
         self.static_context = context
         self.covdata.set_context(self.static_context)
+        self.log_context = log_context
 
     def tracer_name(self):
         """Return the class name of the tracer we're using."""
@@ -202,8 +203,11 @@ class Collector:
         for d in self.data.values():
             d.clear()
 
+        self.log_data.clear()
+
         for tracer in self.tracers:
             tracer.reset_activity()
+
 
     def reset(self):
         """Clear collected data, and prepare to collect more."""
@@ -211,6 +215,10 @@ class Collector:
         # branch coverage), or mapping file names to dicts with line number
         # pairs as keys (if branch coverage).
         self.data = {}
+
+        # A list of filename / line number tuples for logging executed lines.
+        self.log_data = []
+        self.log_context = "default"
 
         # A dictionary mapping file names to file tracer plugin names that will
         # handle them.
@@ -255,6 +263,7 @@ class Collector:
         """Start a new Tracer object, and store it in self.tracers."""
         tracer = self._trace_class()
         tracer.data = self.data
+        tracer.log_data = self.log_data
         tracer.trace_arcs = self.branch
         tracer.should_trace = self.should_trace
         tracer.should_trace_cache = self.should_trace_cache
@@ -398,6 +407,10 @@ class Collector:
             context = new_context
         self.covdata.set_context(context)
 
+    def switch_log_context(self, new_log_context):
+        self.flush_data()
+        self.log_context = new_log_context
+
     def disable_plugin(self, disposition):
         """Disable the plugin mentioned in `disposition`."""
         file_tracer = disposition.file_tracer
@@ -471,6 +484,8 @@ class Collector:
             self.covdata.add_arcs(self.mapped_file_dict(data))
         else:
             self.covdata.add_lines(self.mapped_file_dict(self.data))
+
+        self.covdata.add_logged_lines(self.log_data, self.log_context)
 
         file_tracers = {
             k: v for k, v in self.file_tracers.items()

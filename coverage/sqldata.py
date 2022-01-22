@@ -429,6 +429,21 @@ class CoverageData(SimpleReprMixin):
             else:
                 return None
 
+    def _log_context_id(self, log_context, add=True):
+        """Get the id for a log_context name. Adds a new context if it does not exist yet, by default"""
+        assert log_context is not None
+        self._start_using()
+        with self._connect() as con:
+            row = con.execute_one("select id from log_context where context = ?", (log_context,))
+            if row is not None:
+                return row[0]
+            elif add:
+                with self._connect() as con:
+                    cur = con.execute("insert into log_context (context) values (?)", (log_context,))
+                    return cur.lastrowid
+            else:
+                return None
+
     @_locked
     def set_context(self, context):
         """Set the current context for future :meth:`add_lines` etc.
@@ -470,6 +485,18 @@ class CoverageData(SimpleReprMixin):
 
         """
         return self._filename
+
+    @_locked
+    def add_logged_lines(self, logged_line_data, log_context):
+       """Add logged line data, which is a list of filename/line number tuples."""
+       self._start_using()
+       log_context_id = self._log_context_id(log_context)
+       with self._connect() as con:
+            for d in logged_line_data:
+               (filename, line) = d
+               file_id = self._file_id(filename, add=True)
+               insert_stmt = "insert into log_line(file_id, line_number, log_context_id) values (?, ?, ?)"
+               con.execute(insert_stmt, (file_id, line, log_context_id))
 
     @_locked
     def add_lines(self, line_data):
@@ -1079,6 +1106,7 @@ class SqliteDb(SimpleReprMixin):
             self.debug.write(f"Connecting to {self.filename!r}")
         try:
             self.con = sqlite3.connect(self.filename, check_same_thread=False)
+            # self.con.set_trace_callback(print) // Un comment for enabling query logging
         except sqlite3.Error as exc:
             raise DataError(f"Couldn't use data file {self.filename!r}: {exc}") from exc
 
