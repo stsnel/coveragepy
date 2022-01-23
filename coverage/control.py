@@ -435,13 +435,14 @@ class Coverage:
         """
         self.config.set_option(option_name, value)
 
-    def load(self):
+    def load(self, init=True):
         """Load previously-collected coverage data from the data file."""
-        self._init()
-        if self._collector:
+        if init:
+            self._init()
+        if self._collector and init:
             self._collector.reset()
         should_skip = self.config.parallel and not os.path.exists(self.config.data_file)
-        if not should_skip:
+        if init and not should_skip:
             self._init_data(suffix=None)
         self._post_init()
         if not should_skip:
