@@ -248,8 +248,10 @@ class CoverageData(SimpleReprMixin):
         self._has_lines = False
         self._has_arcs = False
 
-        self._current_context = None
+        self._current_context = ""
         self._current_context_id = None
+        self._current_log_context = "default"
+        self._current_log_context_id = ""
         self._query_context_ids = None
 
     def _locked(method):            # pylint: disable=no-self-argument
@@ -445,8 +447,23 @@ class CoverageData(SimpleReprMixin):
                 return None
 
     @_locked
+    def set_log_context(self, log_context):
+        """Set the current log context for future :meth:`add_log_lines` etc.
+
+        `context` is a str, the name of the log context to use for the next data
+        additions.  The context persists until the next :meth:`set_log_context`.
+
+        .. versionadded:: 5.0
+
+        """
+        if self._debug.should("dataop"):
+            self._debug.write(f"Setting log context: {log_context!r}")
+        self._current_log_context = log_context
+        self._current_log_context_id = None
+
+    @_locked
     def set_context(self, context):
-        """Set the current context for future :meth:`add_lines` etc.
+        """Set the current (coverage) context for future :meth:`add_lines` etc.
 
         `context` is a str, the name of the context to use for the next data
         additions.  The context persists until the next :meth:`set_context`.
@@ -458,6 +475,17 @@ class CoverageData(SimpleReprMixin):
             self._debug.write(f"Setting context: {context!r}")
         self._current_context = context
         self._current_context_id = None
+
+    def _set_log_context_id(self):
+        """Use the _current_log_context to set _current_log_context_id."""
+        log_context = self._current_log_context or "default"
+        log_context_id = self._log_context_id(log_context)
+        if log_context_id is not None:
+            self._current_log_context_id = log_context_id
+        else:
+            with self._connect() as con:
+                cur = con.execute("insert into log_context (context) values (?)", (log_context,))
+                self._current_log_context_id = cur.lastrowid
 
     def _set_context_id(self):
         """Use the _current_context to set _current_context_id."""
@@ -487,9 +515,10 @@ class CoverageData(SimpleReprMixin):
         return self._filename
 
     @_locked
-    def add_logged_lines(self, logged_line_data, log_context):
+    def add_logged_lines(self, logged_line_data):
        """Add logged line data, which is a list of filename/line number tuples."""
        self._start_using()
+       log_context = self._current_log_context
        log_context_id = self._log_context_id(log_context)
        with self._connect() as con:
             for d in logged_line_data:
@@ -829,10 +858,81 @@ class CoverageData(SimpleReprMixin):
         """Start using an existing data file."""
         with self._connect():       # TODO: doesn't look right
             self._have_used = True
+        self._load_coverage_context()
+        self._load_log_context()
 
     def write(self):
         """Ensure the data is written to the data file."""
-        pass
+        self._save_coverage_context()
+        self._save_log_context()
+
+    def _save_coverage_context(self):
+        """Saves the current coverage context to the database for context persistence across requests."""
+        self._set_context_id()
+        current_context_id = self._current_context_id
+        with self._connect() as con:
+            rows = list(con.execute("select * from current_context"))
+            if len(rows) == 0:
+                con.execute("insert into current_context (context_id) values (?)", (current_context_id,))
+            else:
+                con.execute("update current_context set context_id = ?", (current_context_id,))
+
+    def _save_log_context(self):
+        """Saves the current log context to the database for context persistence across request"""
+        self._set_log_context_id()
+        current_log_context_id = self._current_log_context_id
+        with self._connect() as con:
+            rows = list(con.execute("select * from current_context"))
+            if len(rows) == 0:
+                con.execute("insert into current_context (log_context_id) values (?)", (current_log_context_id,))
+            else:
+                con.execute("update current_context set log_context_id = ?", (current_log_context_id,))
+
+    def _load_coverage_context(self):
+        """Loads the current coverage context ID/name from database"""
+        coverage_context_id = self._load_coverage_context_id()
+        coverage_context = self._load_coverage_context_name(coverage_context_id)
+        self._current_context = coverage_context
+        self._set_context_id()
+
+    def _load_log_context(self):
+        """Loads the current log context ID/name from database"""
+        log_context_id = self._load_log_context_id()
+        log_context = self._load_log_context_name(log_context_id)
+        self._current_log_context = log_context
+        self._set_log_context_id()
+
+    def _load_coverage_context_id(self):
+        with self._connect() as con:
+            result = con.execute_one("select context_id from current_context")
+            if result is None:
+                return None
+            else:
+                return result[0]
+
+    def _load_log_context_id(self):
+        with self._connect() as con:
+            result = con.execute_one("select log_context_id from current_context")
+            if result is None:
+                return None
+            else:
+                return result[0]
+
+    def _load_coverage_context_name(self, coverage_context_id):
+        with self._connect() as con:
+            result = con.execute_one("select context from context where id = ?",(coverage_context_id,))
+            if result is None:
+                return None
+            else:
+                return result[0]
+
+    def _load_log_context_name(self, log_context_id):
+        with self._connect() as con:
+            result = con.execute_one("select context from log_context where id = ?",(log_context_id,))
+            if result is None:
+                return None
+            else:
+                return result[0]
 
     def _start_using(self):
         """Call this before using the database at all."""

@@ -189,7 +189,7 @@ class Collector:
         self.covdata = covdata
         self.static_context = context
         self.covdata.set_context(self.static_context)
-        self.log_context = log_context
+        self.covdata.set_log_context(log_context)
 
     def tracer_name(self):
         """Return the class name of the tracer we're using."""
@@ -218,7 +218,6 @@ class Collector:
 
         # A list of filename / line number tuples for logging executed lines.
         self.log_data = []
-        self.log_context = "default"
 
         # A dictionary mapping file names to file tracer plugin names that will
         # handle them.
@@ -409,7 +408,7 @@ class Collector:
 
     def switch_log_context(self, new_log_context):
         self.flush_data()
-        self.log_context = new_log_context
+        self.covdata.set_log_context(new_log_context)
 
     def disable_plugin(self, disposition):
         """Disable the plugin mentioned in `disposition`."""
@@ -485,7 +484,8 @@ class Collector:
         else:
             self.covdata.add_lines(self.mapped_file_dict(self.data))
 
-        self.covdata.add_logged_lines(self.log_data, self.log_context)
+        if len(self.log_data) > 0:
+            self.covdata.add_logged_lines(self.log_data)
 
         file_tracers = {
             k: v for k, v in self.file_tracers.items()
