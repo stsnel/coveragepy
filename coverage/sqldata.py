@@ -282,6 +282,7 @@ class CoverageData(SimpleReprMixin):
         self._file_map = {}
         self._have_used = False
         self._current_context_id = None
+        self._current_log_context_id = None
 
     def _create_db(self):
         """Create a db file that doesn't exist yet.
