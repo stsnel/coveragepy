@@ -519,8 +519,8 @@ class CoverageData(SimpleReprMixin):
     def add_logged_lines(self, logged_line_data):
        """Add logged line data, which is a list of filename/line number tuples."""
        self._start_using()
-       log_context = self._current_log_context
-       log_context_id = self._log_context_id(log_context)
+       self._set_log_context_id()
+       log_context_id = self._current_log_context_id
        with self._connect() as con:
             for d in logged_line_data:
                (filename, line) = d
