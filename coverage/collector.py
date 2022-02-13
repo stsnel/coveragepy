@@ -410,6 +410,10 @@ class Collector:
         self.flush_data()
         self.covdata.set_log_context(new_log_context)
 
+    def export_execution_path(self, log_context):
+        self.flush_data()
+        return self.covdata.export_execution_path(log_context)
+
     def disable_plugin(self, disposition):
         """Disable the plugin mentioned in `disposition`."""
         file_tracer = disposition.file_tracer

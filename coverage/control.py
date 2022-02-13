@@ -642,6 +642,11 @@ class Coverage:
 
         self._collector.switch_log_context(new_context)
 
+    def export_execution_path(self, log_context):
+        """Returns a list of statement tuples (filename, line_number) that have been
+           executed in a particular context."""
+        return self._collector.export_execution_path(log_context)
+
     def clear_exclude(self, which='exclude'):
         """Clear the exclude list."""
         self._init()

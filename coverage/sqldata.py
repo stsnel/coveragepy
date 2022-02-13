@@ -462,6 +462,19 @@ class CoverageData(SimpleReprMixin):
         self._current_log_context = log_context
         self._current_log_context_id = None
 
+    def export_execution_path(self, log_context):
+        query = """
+                  SELECT file.path as file,
+                         log_line.line_number as line_number
+                  FROM   log_line
+                         LEFT JOIN log_context ON log_context.id = log_line.log_context_id
+                         LEFT JOIN file ON log_line.file_id = file.id
+                  WHERE log_context.context = ?
+                  ORDER by log_line.id"""
+        with self._connect() as con:
+            data = con.execute(query, (log_context,))
+            return [ (row[0], row[1]) for row in data ]
+
     @_locked
     def set_context(self, context):
         """Set the current (coverage) context for future :meth:`add_lines` etc.
