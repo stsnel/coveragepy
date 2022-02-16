@@ -96,7 +96,7 @@ class PyTracer:
     def _trace(self, frame, event, arg_unused):
         """The trace function passed to sys.settrace."""
 
-        if THIS_FILE in frame.f_code.co_filename:
+        if THIS_FILE in frame.f_code.co_filename or "/string-extractor/" in frame.f_code.co_filename:
             return None
 
         #self.log(":", frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name + "()", event)
