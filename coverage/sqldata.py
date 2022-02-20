@@ -128,6 +128,8 @@ CREATE TABLE tracer (
     tracer text,
     foreign key (file_id) references file (id)
 );
+
+CREATE INDEX ll_by_ids ON log_line(id,log_context_id);
 """
 
 class CoverageData(SimpleReprMixin):
