@@ -209,6 +209,23 @@ class Collector:
             tracer.reset_activity()
 
 
+    def clear_log_data(self):
+        """Removes any in-memory and persisted log data"""
+        self.log_data.clear()
+        self.covdata.clear_log_data()
+
+    def import_data(self, data):
+        """Resets collector and imports dumped data into the coverage database"""
+        self.reset()
+        self.covdata.import_data(data)
+        self.covdata.set_context(self.static_context)
+
+    def export_data(self):
+        """Export coverage data in SQLite database dump format"""
+        self.flush_data()
+        return self.covdata.export_data();
+
+
     def reset(self):
         """Clear collected data, and prepare to collect more."""
         # A dictionary mapping file names to dicts with line number keys (if not

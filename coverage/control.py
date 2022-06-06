@@ -642,6 +642,29 @@ class Coverage:
 
         self._collector.switch_log_context(new_context)
 
+    def clear_log_data(self):
+        """Clear all log data along with log context data"""
+        if not self._started:                           # pragma: part started
+            raise CoverageException("Cannot clear log data, coverage is not started")
+
+        self._collector.clear_log_data()
+
+
+    def import_data(self, data):
+        """Imports a SQLite dump into the database. Assumes database is empty."""
+
+        if not self._started:                           # pragma: part started
+            raise CoverageException("Cannot import data, coverage is not started")
+
+        self._collector.import_data(data)
+
+    def export_data(self):
+        """Exports data as SQLite dump."""
+        if not self._started:                           # pragma: part started
+            raise CoverageException("Cannot export data, coverage is not started")
+
+        return self._collector.export_data()
+
     def export_execution_path(self, log_context):
         """Returns a list of statement tuples (filename, line_number) that have been
            executed in a particular context."""

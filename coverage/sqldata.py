@@ -464,6 +464,28 @@ class CoverageData(SimpleReprMixin):
         self._current_log_context = log_context
         self._current_log_context_id = None
 
+    @_locked
+    def clear_log_data(self):
+        """Clears current log data."""
+        with self._connect() as conn:
+            conn.execute("delete from log_line")
+            conn.execute("delete from log_context")
+
+
+    @_locked
+    def export_data(self):
+        """Returns a dump file of the present database contents"""
+        with self._connect() as conn:
+            return conn.dump()
+
+
+    @_locked
+    def import_data(self, data):
+        """Imports data into the database"""
+        with self._connect() as conn:
+            conn.executescript(data)
+
+
     def export_execution_path(self, log_context):
         query = """
                   SELECT file.path as file,
