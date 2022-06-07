@@ -286,7 +286,7 @@ class CoverageData(SimpleReprMixin):
         self._current_context_id = None
         self._current_log_context_id = None
 
-    def _create_db(self):
+    def _create_db(self, init_schema = True):
         """Create a db file that doesn't exist yet.
 
         Initializes the schema and certain metadata.
@@ -294,6 +294,8 @@ class CoverageData(SimpleReprMixin):
         if self._debug.should("dataio"):
             self._debug.write(f"Creating data file {self._filename!r}")
         self._dbs[threading.get_ident()] = db = SqliteDb(self._filename, self._debug)
+        if not init_schema:
+            return
         with db:
             db.executescript(SCHEMA)
             db.execute("insert into coverage_schema (version) values (?)", (SCHEMA_VERSION,))
@@ -339,13 +341,13 @@ class CoverageData(SimpleReprMixin):
             for path, file_id in db.execute("select path, id from file"):
                 self._file_map[path] = file_id
 
-    def _connect(self):
+    def _connect(self, init_schema=True):
         """Get the SqliteDb object to use."""
         if threading.get_ident() not in self._dbs:
             if os.path.exists(self._filename):
                 self._open_db()
             else:
-                self._create_db()
+                self._create_db(init_schema)
         return self._dbs[threading.get_ident()]
 
     def __bool__(self):
@@ -481,9 +483,8 @@ class CoverageData(SimpleReprMixin):
 
     @_locked
     def import_data(self, data):
-        """Imports data into the database, clearing any existing data"""
-        file_be_gone(self._filename)
-        with self._connect() as conn:
+        """Imports data into the database. Assumes database is empty"""
+        with self._connect(False) as conn:
             conn.executescript(data)
 
 

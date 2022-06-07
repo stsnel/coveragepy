@@ -651,12 +651,11 @@ class Coverage:
 
 
     def import_data(self, data):
-        """Imports a SQLite dump into the database. Assumes database is empty."""
-
-        if not self._started:                           # pragma: part started
-            raise CoverageException("Cannot import data, coverage is not started")
-
+        """Imports a SQLite dump into the database."""
+        self.stop()
+        self.erase()
         self._collector.import_data(data)
+        self.start()
 
     def export_data(self):
         """Exports data as SQLite dump."""
