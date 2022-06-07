@@ -481,7 +481,8 @@ class CoverageData(SimpleReprMixin):
 
     @_locked
     def import_data(self, data):
-        """Imports data into the database"""
+        """Imports data into the database, clearing any existing data"""
+        file_be_gone(self._filename)
         with self._connect() as conn:
             conn.executescript(data)
 
