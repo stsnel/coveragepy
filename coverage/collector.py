@@ -211,19 +211,26 @@ class Collector:
 
     def clear_log_data(self):
         """Removes any in-memory and persisted log data"""
+        self.pause()
         self.log_data.clear()
         self.covdata.clear_log_data()
+        self.resume()
 
     def import_data(self, data):
         """Resets collector and imports dumped data into the coverage database"""
         self.reset()
+        self.pause()
         self.covdata.import_data(data)
         self.covdata.set_context(self.static_context)
+        self.resume()
 
     def export_data(self):
         """Export coverage data in SQLite database dump format"""
+        self.pause()
         self.flush_data()
-        return self.covdata.export_data();
+        data = self.covdata.export_data()
+        self.resume()
+        return data
 
 
     def reset(self):
