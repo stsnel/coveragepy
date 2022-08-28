@@ -655,6 +655,7 @@ class Coverage:
         self.stop()
         self.erase()
         self._collector.import_data(data)
+        self.load()
         self.start()
 
     def export_data(self):
